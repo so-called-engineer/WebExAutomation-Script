@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from datetime import date,datetime
-import os,sys,subprocess,time,requests,keyboard,glob
+import os,sys,subprocess,time,requests,keyboard,glob,getpass
 from io import StringIO
 from pdfminer.high_level import extract_text,extract_text_to_fp
 from pdfminer.layout import LAParams
@@ -11,6 +11,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException,ElementNotInteractableException,TimeoutException
+
+# Declaring static paths 
+userdetailstext = r"C:\Users\\"+getpass.getuser()+r"\Documents\userDetails.txt"
+powershellscript = r"C:\Users\\"+getpass.getuser()+r"\Documents\schedule.ps1"
+convertedhtml = r"C:\Users\\"+getpass.getuser()+r"\Documents\converted.html"
+applocation = r"C:\Users\\"+getpass.getuser()+r"\Documents\WebExAutomation.exe"
+calendarpath = r"C:\Users\\"+getpass.getuser()+r"\Documents\Calendar*.pdf"
 
 # defining a function to get abspath for absolute path
 def resource_path(relative_path):
@@ -25,24 +32,24 @@ print("\nA WebEx Automated Script by SoCalledEngineer\n")
 
 #powershell script function
 def power_shell(script_details):
-    ps = open(os.getcwd()+"\schedule.ps1","w+")
+    ps = open(powershellscript,"w+")
     ps.write(script_details)
     ps.close()
     try:
-        p=subprocess.run(['powershell',"-ExecutionPolicy", "Unrestricted", os.getcwd()+"\\schedule.ps1"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+        p=subprocess.run(['powershell',"-ExecutionPolicy", "Unrestricted", powershellscript], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     except:
         print("\nSeems application not able to run powershell scripts which means I can't set scheduled tasks. Sorry ;-)")
         time.sleep(10)
         sys.exit()
 
 # For creating a userdetails file
-filename = open(os.getcwd()+r"\userdetails.txt","a")
+filename = open(userdetailstext,"a")
 filename.close()
 # For Checking whether userdetails file is empty or not
-filename=open(os.getcwd()+r"\userdetails.txt","r")
+filename=open(userdetailstext,"r")
 # If empty then copy details into text file
 if len(filename.read().split(","))<7:
-    filename = open(os.getcwd()+r"\userdetails.txt","w+")
+    filename = open(userdetailstext,"w+")
     print("The folowing details are asked for joining Webex Meeting\n")
     print("Details will be asked only during first run of this application. Enter details carefully.\n")
     print("Enter Your Name")
@@ -60,7 +67,7 @@ if len(filename.read().split(","))<7:
     print("While logging into outlook u receive otp via\n#if mobile enter 0\n#if gmail enter 1")
     filename.write(input())
     filename.close()
-    f = open(os.getcwd()+r"\userdetails.txt","r")
+    f = open(userdetailstext,"r")
     userDetails = f.read().split(",")
     f.close()
     username = '-'.join(userDetails[0].split(" "))
@@ -71,11 +78,11 @@ if len(filename.read().split(","))<7:
     gmailpass = userDetails[5]
     timings = ["8:00AM","12:00PM","6:00PM"]
     for set_time in timings:
-        power_shell("$A = New-ScheduledTaskAction -Execute "+'"'+os.getcwd()+"\WebExAutomation.exe"+'"'+"\n$T = New-ScheduledTaskTrigger -Daily -At "+set_time+"\n$S = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Priority 3 -ExecutionTimeLimit (New-TimeSpan -Hours 1)\n$D = New-ScheduledTask -Action $A -Trigger $T -Settings $S\nRegister-ScheduledTask MyTasks\WebExAutomation"+set_time.replace(":","-")+" -InputObject $D")
+        power_shell("$A = New-ScheduledTaskAction -Execute "+'"'+applocation+'"'+"\n$T = New-ScheduledTaskTrigger -Daily -At "+set_time+"\n$S = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Priority 3 -ExecutionTimeLimit (New-TimeSpan -Hours 1)\n$D = New-ScheduledTask -Action $A -Trigger $T -Settings $S\nRegister-ScheduledTask MyTasks\WebExAutomation"+set_time.replace(":","-")+" -InputObject $D")
         
 #if not empty then continue using that already populated data
 else:
-    f = open(os.getcwd()+r"\userdetails.txt","r")
+    f = open(userdetailstext,"r")
     userDetails = f.read().split(",")
     f.close()
     username = '-'.join(userDetails[0].split(" "))
@@ -108,7 +115,7 @@ def driver_func():
 #defining otp extraction function
 def otp_extraction():
     global count6,otp,otpnum
-    otpmsg = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(otp)).text
+    otpmsg = WebDriverWait(driver, 60).until(EC.element_to_be_clickable(otp)).text
     if "Use this code for Microsoft verification" in otpmsg:
         otpnum = otpmsg.split("Use this code for Microsoft verification")[0].splitlines()[1][:6]
     elif "Use this code for Microsoft verification" not in otpmsg and count6==1:
@@ -155,22 +162,22 @@ def meetings_grab_func():
             otp = (By.XPATH,"(//span[@class='y2'])[1]")
             otpenter = (By.ID,"idTxtBx_SAOTCC_OTC")
             verify = (By.ID,"idSubmit_SAOTCC_Continue")
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(email)).send_keys(outlookuser)
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(nextbtn)).click()
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(password)).send_keys(outlookpass)
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(nextbtn)).click()
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(email)).send_keys(outlookuser)
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(nextbtn)).click()
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(password)).send_keys(outlookpass)
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(nextbtn)).click()
             time.sleep(10)
             driver.execute_script("window.open('https://accounts.google.com/AccountChooser?service=mail&continue=https://mail.google.com/mail/');")
             driver.switch_to.window(driver.window_handles[1])
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(gmail)).send_keys(gmailuser)
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(nextgmail)).click()
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(gpass)).send_keys(gmailpass)
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(passnext)).click()
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(gmail)).send_keys(gmailuser)
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(nextgmail)).click()
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(gpass)).send_keys(gmailpass)
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(passnext)).click()
             otpnumber = otp_extraction()
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(otpenter)).send_keys(otpnumber)
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(verify)).click()
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(otpenter)).send_keys(otpnumber)
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(verify)).click()
             try:
                 WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.ID,"idSpan_SAOTCC_Error_OTC")))
                 driver.quit()
@@ -178,8 +185,8 @@ def meetings_grab_func():
                 pdf_extract()
                 sys.exit()
             except (TimeoutException, NoSuchElementException, ElementNotInteractableException):
-                WebDriverWait(driver, 10).until(EC.element_to_be_clickable(nextbtn)).click()
-                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH,"(//div[@class='_2TlB2Y6FLDwMsOcsJiLqeA HscWDJMhQ_BFsXeYXDCXo'])")))
+                WebDriverWait(driver, 60).until(EC.element_to_be_clickable(nextbtn)).click()
+                WebDriverWait(driver, 60).until(EC.presence_of_element_located((By.XPATH,"(//div[@class='_2TlB2Y6FLDwMsOcsJiLqeA HscWDJMhQ_BFsXeYXDCXo'])")))
                 detail_extraction()
         else:
             detail_extraction() 
@@ -225,9 +232,9 @@ def url_check(url,test,urlcount):
 def pdf_extract():
     output_string = StringIO()
     try:
-        with open(glob.glob(os.getcwd()+"\Calendar*.pdf")[len(glob.glob(os.getcwd()+"\Calendar*.pdf"))-1], "rb") as fin:
+        with open(glob.glob(calendarpath)[len(glob.glob(calendarpath))-1], "rb") as fin:
             extract_text_to_fp(fin, output_string, laparams=LAParams(), output_type='html', codec=None)
-        f = open(os.getcwd()+r"\converted.html","w+",encoding='utf-8')
+        f = open(convertedhtml,"w+",encoding='utf-8')
         f.write(output_string.getvalue().strip())
         f.close()
     except Exception:
@@ -235,7 +242,7 @@ def pdf_extract():
         time.sleep(10)
         sys.exit()
     # Extracting data from converted html
-    soup = BeautifulSoup(open(os.getcwd()+r"\converted.html",encoding='utf-8'),'html.parser')
+    soup = BeautifulSoup(open(convertedhtml,encoding='utf-8'),'html.parser')
     global text1,text2,text3,text
     text1,text2,text3="","",""
     text = []
@@ -265,7 +272,7 @@ def pdf_extract():
         urlcount = 0
         if startTime[1] == presentDate:
             if presentTime < presentTime.replace(hour=int(full_time[0]), minute=int(full_time[1]), second=0, microsecond=0) and "https://" in url or "www." in url:
-                power_shell("$A = New-ScheduledTaskAction -Execute "+'"'+os.getcwd()+"\WebExAutomation.exe"+'"'+" -Argument "+'"'+url_check(url,test,urlcount)+'"'+"\n$T = New-ScheduledTaskTrigger -Once -At "+meetingStartTime+"\n$S = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Priority 3 -ExecutionTimeLimit (New-TimeSpan -Hours 1)"+"\n$D = New-ScheduledTask -Action $A -Trigger $T -Settings $S"+"\nRegister-ScheduledTask MyTasks\Task"+startTime[1].replace("/","-")+startTime[2].replace(":","-")+startTime[3]+" -InputObject $D")
+                power_shell("$A = New-ScheduledTaskAction -Execute "+'"'+applocation+'"'+" -Argument "+'"'+url_check(url,test,urlcount)+'"'+"\n$T = New-ScheduledTaskTrigger -Once -At "+meetingStartTime+"\n$S = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Priority 3 -ExecutionTimeLimit (New-TimeSpan -Hours 1)"+"\n$D = New-ScheduledTask -Action $A -Trigger $T -Settings $S"+"\nRegister-ScheduledTask MyTasks\Task"+startTime[1].replace("/","-")+startTime[2].replace(":","-")+startTime[3]+" -InputObject $D")
             elif presentTime > presentTime.replace(hour=int(full_time[0]), minute=int(full_time[1]), second=0, microsecond=0) and "https://" in url or "www." in url:
                 power_shell(r"Unregister-ScheduledTask -TaskPath '\MyTasks\' -TaskName Task"+startTime[1].replace("/","-")+startTime[2].replace(":","-")+startTime[3]+" -Confirm:$false")
     print("\n***WebEx Meetings Scheduled for the day and removed previous tasks if existed***")
@@ -299,7 +306,7 @@ if args_exists == '0':
                 test = True
                 urlcount = 0
                 if presentTime < presentTime.replace(hour=int(full_time[0]), minute=int(full_time[1]), second=0, microsecond=0) and "https://" in links[z] or "www." in links[z]:
-                    power_shell("$A = New-ScheduledTaskAction -Execute "+'"'+os.getcwd()+"\WebExAutomation.exe"+'"'+" -Argument "+'"'+url_check(links[z],test,urlcount)+'"'+"\n$T = New-ScheduledTaskTrigger -Once -At "+times[z].replace(" ","")+"\n$S = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Priority 3 -ExecutionTimeLimit (New-TimeSpan -Hours 1)"+"\n$D = New-ScheduledTask -Action $A -Trigger $T -Settings $S"+"\nRegister-ScheduledTask MyTasks\Task"+presentDate+(times[z].replace(" ","-")).replace(":","-")+" -InputObject $D")
+                    power_shell("$A = New-ScheduledTaskAction -Execute "+'"'+applocation+'"'+" -Argument "+'"'+url_check(links[z],test,urlcount)+'"'+"\n$T = New-ScheduledTaskTrigger -Once -At "+times[z].replace(" ","")+"\n$S = New-ScheduledTaskSettingsSet -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -Priority 3 -ExecutionTimeLimit (New-TimeSpan -Hours 1)"+"\n$D = New-ScheduledTask -Action $A -Trigger $T -Settings $S"+"\nRegister-ScheduledTask MyTasks\Task"+presentDate+(times[z].replace(" ","-")).replace(":","-")+" -InputObject $D")
                 elif presentTime > presentTime.replace(hour=int(full_time[0]), minute=int(full_time[1]), second=0, microsecond=0) and "https://" in links[z] or "www." in links[z]:
                     power_shell(r"Unregister-ScheduledTask -TaskPath '\MyTasks\' -TaskName Task"+presentDate+(times[z].replace(" ","-")).replace(":","-")+" -Confirm:$false")
             print("\n***WebEx Meetings Scheduled for the day and removed previous tasks if existed***")
@@ -356,11 +363,11 @@ elif args_exists == '1':
             email = (By.ID, "i0116")
             password = (By.ID, "i0118")
             nextbtn = (By.ID, "idSIButton9")
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(email)).send_keys(outlookuser)
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(nextbtn)).click()
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(password)).send_keys(outlookpass)
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(nextbtn)).click()
-            WebDriverWait(driver, 10).until(EC.element_to_be_clickable(nextbtn)).click()
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(email)).send_keys(outlookuser)
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(nextbtn)).click()
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(password)).send_keys(outlookpass)
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(nextbtn)).click()
+            WebDriverWait(driver, 60).until(EC.element_to_be_clickable(nextbtn)).click()
         except (TimeoutException, NoSuchElementException, ElementNotInteractableException, Exception):
             if(count4==0):
                 time.sleep(10)
